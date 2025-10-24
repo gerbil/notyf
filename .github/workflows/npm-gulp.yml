@@ -1,28 +1,41 @@
-name: NodeJS with Gulp
+name: Build & Release Notyf
 
 on:
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x, 22.x]
-
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
 
-    - name: Build
-      run: |
-        npm install
-        gulp
+      - run: npm ci
+      # Notyf builds via the repo’s build script (bundles ES, CJS, UMD/IIFE)
+      - run: npm run build
+
+      - name: Tar build output
+        run: |
+          mkdir -p artifacts
+          # adjust if your build outputs to another folder
+          cp -r dist artifacts/dist
+          tar -czf notyf-build-${{ github.ref_name }}.tar.gz -C artifacts dist
+
+      - name: Create GitHub Release (or update if exists)
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            notyf-build-${{ github.ref_name }}.tar.gz
+            dist/**/*.js
+            dist/**/*.css
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
