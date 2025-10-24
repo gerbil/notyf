@@ -1,10 +1,13 @@
+# .github/workflows/release.yml
 name: Build & Release Notyf
 
 on:
-  workflow_dispatch
+  push:
+    tags: ["v*"]
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
   build:
@@ -14,21 +17,20 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 14
           cache: npm
-
       - run: npm ci
-      # Notyf builds via the repo’s build script (bundles ES, CJS, UMD/IIFE)
+        env:
+          npm_config_build_from_source: false  # prefer prebuilt node-sass
       - run: npm run build
 
-      - name: Tar build output
+      - name: Pack build output
         run: |
           mkdir -p artifacts
-          # adjust if your build outputs to another folder
           cp -r dist artifacts/dist
           tar -czf notyf-build-${{ github.ref_name }}.tar.gz -C artifacts dist
 
-      - name: Create GitHub Release (or update if exists)
+      - name: Create/Update GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
@@ -37,3 +39,20 @@ jobs:
             dist/**/*.css
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Optional: publish to npm from modern Node after build artifacts exist
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+      - run: npm ci
+      - run: npm run build
+      - run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}  # or use Trusted Publishing
