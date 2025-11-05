@@ -85,6 +85,58 @@ export class NotyfView {
     this._announce(notification.options.message || 'Notification');
   }
 
+  public startProgressLine(notification: NotyfNotification, durationMs: number) {
+    const toastEl = this.getNotificationElement(notification);
+    if (!toastEl) return;
+  
+    let lineEl = toastEl.querySelector<HTMLSpanElement>('.notyf-progress');
+    if (!lineEl) {
+      lineEl = document.createElement('span');
+      lineEl.className = 'notyf-progress';
+      toastEl.appendChild(lineEl);
+    }
+  
+    // Set / reset duration and start running
+    lineEl.style.animationDuration = `${durationMs}ms`;
+    // restart animation in case this element was reused
+    // force reflow to restart keyframes
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    lineEl.offsetWidth;
+    lineEl.style.animationPlayState = 'running';
+  
+    // Optional: if you want to auto-remove the bar on CSS end (backup to timer)
+    const onEnd = () => {
+      lineEl?.removeEventListener('animationend', onEnd);
+      lineEl?.remove();
+    };
+    lineEl.addEventListener('animationend', onEnd);
+}
+
+public pauseProgressLine(notification: NotyfNotification) {
+  const toastEl = this.getNotificationElement(notification);
+  const lineEl = toastEl?.querySelector<HTMLSpanElement>('.notyf-progress');
+  if (lineEl) lineEl.style.animationPlayState = 'paused';
+}
+
+public resumeProgressLine(notification: NotyfNotification) {
+  const toastEl = this.getNotificationElement(notification);
+  const lineEl = toastEl?.querySelector<HTMLSpanElement>('.notyf-progress');
+  if (lineEl) lineEl.style.animationPlayState = 'running';
+}
+
+public finishProgressLine(notification: NotyfNotification) {
+  const toastEl = this.getNotificationElement(notification);
+  const lineEl = toastEl?.querySelector<HTMLSpanElement>('.notyf-progress');
+  if (lineEl) {
+    // snap to 0 and fade, then remove
+    lineEl.style.transition = 'transform 120ms linear, opacity 120ms linear';
+    lineEl.style.transform = 'scaleX(0)';
+    lineEl.style.opacity = '0';
+    // remove after the snap transition
+    setTimeout(() => lineEl.remove(), 140);
+  }
+}
+
   private _renderNotification(notification: NotyfNotification): HTMLElement {
     const card = this._buildNotificationCard(notification);
     const className = notification.options.className;
