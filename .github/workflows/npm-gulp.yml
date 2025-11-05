@@ -54,8 +54,8 @@ jobs:
 
       - name: Create or update GitHub Release
         uses: softprops/action-gh-release@v2
-        tag_name: master
         with:
+          tag_name: master
           files: |
             notyf-dist-master.tar.gz
             notyf-dist-master.zip
