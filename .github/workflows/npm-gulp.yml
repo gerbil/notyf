@@ -55,11 +55,9 @@ jobs:
       - name: Create or update GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          # If this run was triggered by a tag push, this attaches to that tag’s Release.      
-          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
           files: |
-            notyf-dist-${{ github.ref_name || 'manual' }}.tar.gz
-            notyf-dist-${{ github.ref_name || 'manual' }}.zip
+            notyf-dist-master.tar.gz
+            notyf-dist-master.zip
             dist/**/*.js
             dist/**/*.css
         env:
