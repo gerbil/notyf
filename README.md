@@ -24,6 +24,9 @@ Notyf is a minimalistic JavaScript library for toast notifications. It's respons
 - 🐣 Tiny footprint (<3K gzipped)
 - 👴🏽 Works on IE11
 
+- Pause on mouseover
+- Bottom line on timer with drain animation
+
 **Demo:** [carlosroso.com/notyf](http://carlosroso.com/notyf/)
 
 ## Installation
