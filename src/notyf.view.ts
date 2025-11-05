@@ -57,6 +57,22 @@ export class NotyfView {
     }
   }
 
+ /**
+ * Returns the DOM element associated with a notification.
+ */
+  public getNotificationElement(notification: NotyfNotification): HTMLElement | null {
+    // NotyfView typically keeps a map of rendered notifications (e.g. this._notifications)
+    // If not, we can find it by data attributes that Notyf sets on creation.
+    const id = (notification as any).id || (notification as any)._id;
+    if (!id) {
+      // fallback – search for matching message text (less ideal)
+      return this.container.querySelector('.notyf__toast:last-child');
+    }
+  
+    // Example: if you set a data attribute on each toast when rendering:
+    return this.container.querySelector(`.notyf__toast[data-notyf-id="${id}"]`);
+  }
+
   public removeNotification(notification: NotyfNotification) {
     const renderedNotification = this._popRenderedNotification(notification);
     let node!: HTMLElement;
