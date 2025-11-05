@@ -81,22 +81,37 @@ export default class Notyf {
   }
 
   private _pushNotification(notification: NotyfNotification) {
-    
-    this.notifications.push( notification );
-    
+    this.notifications.push(notification);
+  
     const duration =
-      notification.options.duration !== undefined ? notification.options.duration : this.options.duration;
-    
-    if ( !duration ) return
-
-    const timer = new Timer( duration );
-    
-    notification.on(NotyfEvent.MouseOver, () => timer.pause());
-    
-    notification.on(NotyfEvent.MouseLeave, () => timer.resume());
-    
-    timer.on('finished', () => this._removeNotification(notification) )
-
+      notification.options.duration !== undefined
+        ? notification.options.duration
+        : this.options.duration;
+  
+    if (!duration) return;
+  
+    const timer = new Timer(duration);
+  
+    // Start the shrinking line in the view, same duration as the timer
+    this.view.startProgressLine(notification, duration);
+  
+    // Pause on hover -> pause timer AND pause the line (do not hide it)
+    notification.on(NotyfEvent.MouseOver, () => {
+      timer.pause();
+      this.view.pauseProgressLine(notification);
+    });
+  
+    // Resume on mouse leave -> resume timer AND the line
+    notification.on(NotyfEvent.MouseLeave, () => {
+      timer.resume();
+      this.view.resumeProgressLine(notification);
+    });
+  
+    // When the timer finishes, finish line + remove toast
+    timer.on('finished', () => {
+      this.view.finishProgressLine(notification); // optional: force to 0 / cleanup
+      this._removeNotification(notification);
+    });
   }
 
   private _removeNotification(notification: NotyfNotification) {
